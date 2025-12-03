@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Laravel\Socialite\Facades\Socialite;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Exception;
 
 class GoogleController extends Controller
 {
@@ -16,17 +17,22 @@ class GoogleController extends Controller
 
     public function callback()
     {
-        $googleUser = Socialite::driver('google')->user();
+        try {
+            $googleUser = Socialite::driver('google')->user();
 
-        $user = User::updateOrCreate([
-            'email' => $googleUser->getEmail(),
-        ], [
-            'name' => $googleUser->getName(),
-            'password' => bcrypt(str()->random(16)),
-        ]);
+            $user = User::updateOrCreate([
+                'email' => $googleUser->getEmail(),
+            ], [
+                'name' => $googleUser->getName(),
+                'password' => bcrypt(str()->random(16)),
+            ]);
 
-        Auth::login($user);
+            Auth::login($user);
 
-        return redirect('/tasks');
+            return redirect('/tasks');
+            
+        } catch (Exception $e) {
+            return redirect('/login')->with('error', 'Google authentication failed. Please try again.');
+        }
     }
 }
